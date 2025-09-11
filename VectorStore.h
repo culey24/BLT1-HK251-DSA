@@ -93,7 +93,9 @@ public:
     ~SinglyLinkedList();
 
     void add(T e);
+    void add_at_head(T e); // USER-DEFINED
     void add(int index, T e);
+    void remove_first_item(); // USER-DEFINED
     T removeAt(int index);
     bool removeItem(T item);
     bool empty() const;

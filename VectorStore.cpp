@@ -251,36 +251,217 @@ SinglyLinkedList<T>::~SinglyLinkedList() {
         cursor = cursor->next;
         delete temp;
     }
+    count = 0;
 }   
 
 template <class T>
 void SinglyLinkedList<T>::add(T e) {
     Node* new_node = new Node(e, nullptr);
+    if (count == 0) {
+        head = new_node;
+        tail = new_node;
+        count++;
+        return;
+    }
     tail->next = new_node;
     tail = new_node;
+    count++;
+}
+
+template <class T> 
+void SinglyLinkedList<T>::add_at_head(T e) {
+    Node* new_node = new Node(e, nullptr);
+    new_node->next = head;
+    head = new_node;
+    if (tail == nullptr) tail = new_node;
+    count++;
 }
 
 template <class T>
 void SinglyLinkedList<T>::add(int index, T e) {
-    if (index < 0 || index >= count) throw out_of_range("Index is invalid!");
+    if (index < 0 || index > count) throw out_of_range("Index is invalid!");
+    if (index == 0) {
+        add_at_head(e);
+        return;
+    }
+    if (index == count) {
+        add(e);
+        return;    
+    }
     Node* new_node = new Node(e);
-    
+    Node* cursor = head;
+    for (int i = 0; i < index - 1; i++) {
+        cursor = cursor->next;
+    }
+    new_node->next = cursor->next;
+    cursor->next = new_node;
+    count++;
+}
+
+template <class T>
+void SinglyLinkedList<T>::remove_first_item() {
+    // DEBUG ===
+    if (count == 0) throw out_of_range("EMPTY_LIST: CANNOT REMOVE HEAD OF EMPTY LIST");
+    // DEBUG ===
+    Node* temp = head;
+    head = head->next;
+    delete temp;
+    count--;
+    if (count == 0) tail = nullptr;
+}
+
+template <class T>
+T SinglyLinkedList<T>::removeAt(int index) {
+    if (index < 0 || index >= count) throw out_of_range("Index is invalid!");
+    if (index == 0) {
+        T result = head->data;
+        remove_first_item();
+        return result;
+    }
+    Node* cursor = head;
+    for (int i = 0; i < index - 1; i++) {
+        cursor = cursor->next;
+    }
+    Node* temp = cursor->next;
+    if (temp == tail) tail = cursor;
+    T result = temp->data;
+    cursor->next = cursor->next->next;
+    delete temp;
+    count--;
+    return result;
+}
+
+template <class T>
+bool SinglyLinkedList<T>::removeItem(T item) {
+    if (head != nullptr && head->data == item) {
+        remove_first_item();
+        return true;
+    }
+    Node* cursor = head;
+    while (cursor->next != nullptr) {
+        if (cursor->next->data == item) {
+            Node* temp = cursor->next;
+            if (temp == tail) tail = cursor;
+            cursor->next = temp->next;
+            delete temp;
+            count--;
+            return true;
+        }
+        cursor = cursor->next;
+    }
+    return false;
+}
+
+template <class T>
+bool SinglyLinkedList<T>::empty() const {
+    return (count == 0);
+}
+
+template <class T>
+int SinglyLinkedList<T>::size() const {
+    return count;
+}
+
+template <class T>
+void SinglyLinkedList<T>::clear() {
+    while (head != nullptr) {
+        Node* temp = head;
+        head = head->next;
+        delete temp;
+    }
+    tail = nullptr;
+    count = 0;
+}
+
+template <class T>
+T& SinglyLinkedList<T>::get(int index) {
+    Node* cursor = head;
+    for (int i = 0; i < index; i++) {
+        cursor = cursor->next;
+    }    
+    return cursor->data;
+}
+
+template <class T>
+int SinglyLinkedList<T>::indexOf(T item) const {
+    Node* cursor = head;
+    for (int i = 0; i < count; i++) {
+        if (cursor->data == item) return i;
+        cursor = cursor->next;
+    }
+    return -1;
+}
+
+template <class T>
+bool SinglyLinkedList<T>::contains(T item) const {
+    for (Node* cursor = head; cursor != nullptr; cursor = cursor->next) {
+        if (cursor->data == item) return true;
+    }
+    return false;
+}
+
+template <class T>
+string SinglyLinkedList<T>::toString(string (*item2str)(T&) = 0) const {
+    stringstream ss;
+    for (Node* cursor = head; cursor != nullptr; cursor = cursor->next) {
+        ss << '[' << item2str(cursor->data) << ']';
+        if (cursor != tail) ss<<"->";
+    }
+    return ss.str();
+}
+
+template <class T>
+SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::begin() {
+    return Iterator(head);
+}
+
+template <class T>
+SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::begin() {
+    return Iterator(tail->next);
 }
 
 // ----------------- Iterator of SinglyLinkedList Implementation -----------------
 template <class T>
 SinglyLinkedList<T>::Iterator::Iterator(Node* node) {
-    // TODO
+    current = node;
 }   
 
-// TODO: implement other methods of SinglyLinkedList::Iterator
+template <class T>
+SinglyLinkedList<T>::Iterator& SinglyLinkedList<T>::Iterator::operator=(const Iterator& other) {
+    if (this == &other) return *this;
+    this->current = other.current;
+    return *this;
+}
 
+template <class T>
+T& SinglyLinkedList<T>::Iterator::operator*() {
+    return *this->current;
+}
 
+template <class T>
+bool SinglyLinkedList<T>::Iterator::operator!=(const Iterator& other) const {
+    return this->current != other.current;
+}
+
+template <class T>
+SinglyLinkedList<T>::Iterator& SinglyLinkedList<T>::Iterator::operator++() {
+    if (this->current == nullptr) throw m out_of_range("Iterator cannot advance past end!");
+    this->current = this->current->next;
+    return *this;
+}
+
+template <class T>
+SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::Iterator::operator++(int) {
+    if (this->current == nullptr) throw m out_of_range("Iterator cannot advance past end!");
+    Iterator previous_value = *this;
+    ++*this;
+    return previous_value;
+}
 
 // ----------------- VectorStore Implementation -----------------
 
 VectorStore::VectorStore(int dimension = 512, EmbedFn embeddingFunction = nullptr) {
-    // TODO
+    
 }
 
 VectorStore::~VectorStore() {
