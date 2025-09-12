@@ -98,6 +98,7 @@ public:
     void remove_first_item(); // USER-DEFINED
     T removeAt(int index);
     bool removeItem(T item);
+
     bool empty() const;
     int size() const;
     void clear();

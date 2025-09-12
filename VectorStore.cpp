@@ -458,18 +458,85 @@ SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::Iterator::operator++(int) {
     return previous_value;
 }
 
+
+// ----------------- VectorRecord of VectorStore Implementation -----------------
+
+VectorStore::VectorRecord::VectorRecord(int id, const std::string &rawText, SinglyLinkedList<float> *vector) {
+    this->id = id;
+    this->rawText = rawText;
+    this->rawLength = rawText.size();
+    this->vector = vector;
+}
+
 // ----------------- VectorStore Implementation -----------------
 
 VectorStore::VectorStore(int dimension = 512, EmbedFn embeddingFunction = nullptr) {
-    
+    this->dimension = dimension;
+    this->count = 0;
+    this->embeddingFunction = embeddingFunction;
 }
 
 VectorStore::~VectorStore() {
-    // TODO
+    clear();
 }
 
-// TODO: implement other methods of VectorStore
+int VectorStore::size() const {
+    return count;
+}
 
+bool VectorStore::empty() const {
+    return (count == 0);
+}
+
+void VectorStore::clear() {
+    for (int i = 0; i < records.size(); i++) {
+        VectorRecord* record = records.get(i);
+        if (record != nullptr) {
+            delete record->vector;
+            delete record;
+        }
+    }
+    records.clear();
+    count = 0;
+}
+
+SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
+    SinglyLinkedList<float>* preprocessed_vector = nullptr;
+    if (embeddingFunction) preprocessed_vector = embeddingFunction(rawText);
+    int new_dimension = preprocessed_vector->size();
+    if (new_dimension == dimension) return preprocessed_vector;
+    if (new_dimension > dimension) {
+        SinglyLinkedList<float>* adjusted_vector = new SinglyLinkedList<float>();
+        int copied = 0;
+        for (auto iterator = preprocessed_vector->begin(); iterator != preprocessed_vector->end() && copied < dimension; iterator++, copied++) {
+            adjusted_vector->add(*iterator);
+        }
+        delete preprocessed_vector;
+        return adjusted_vector;
+    }
+    else if (new_dimension < dimension) {
+        for (int i = 0; i < dimension - new_dimension; i++) {
+            preprocessed_vector->add(0.0f);
+        }
+        return preprocessed_vector;
+    }
+}
+
+void VectorStore::addText(string rawText) {
+    SinglyLinkedList<float>* new_vector = preprocessing(rawText);
+    VectorRecord* new_record = new VectorRecord(records.size(), rawText, new_vector);
+    records.add(new_record);
+}
+
+SinglyLinkedList<float>& VectorStore::getVector(int index) {
+    VectorRecord* record = records.get(index);
+    return *record->vector;
+}
+
+string VectorStore::getRawText(int index) const {
+    VectorRecord* record = records.get(index); // FIXME
+    return record->rawText;
+}
 
 // Explicit template instantiation for char, string, int, double, float, and Point
 
