@@ -35,6 +35,7 @@ public:
     int size() const;
     void clear();
     T& get(int index);
+    T get_copy(int index) const; // USER-DEFINED
     void set(int index, T e);
     int indexOf(T item) const;
     bool contains(T item) const;
@@ -110,6 +111,9 @@ public:
     Iterator begin();
     Iterator end();
 
+    Iterator const_begin() const; // USER-DEFINED
+    Iterator const_end() const; // USER-DEFINED
+
     // Inner class Iterator
     class Iterator {
         #ifdef TESTING
@@ -171,6 +175,8 @@ public:
     void setEmbeddingFunction(EmbedFn newEmbeddingFunction);
 
     void forEach(void (*action)(SinglyLinkedList<float>&, int, string&));
+
+    double vector_length(const SinglyLinkedList<float>& vector) const; // USER-DEFINED
 
     double cosineSimilarity(const SinglyLinkedList<float>& v1,
                             const SinglyLinkedList<float>& v2) const;

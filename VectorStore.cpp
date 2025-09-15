@@ -126,6 +126,14 @@ T& ArrayList<T>::get(int index) {
 }
 
 template <class T>
+T ArrayList<T>::get_copy(int index) const {
+    if (index < 0 || index >= count) {
+        throw out_of_range("Index is invalid!");
+    }
+    return data[index];
+}
+
+template <class T>
 void ArrayList<T>::set(int index, T e) {
     if (index < 0 || index >= count) {
         throw out_of_range("Index is invalid!");
@@ -416,7 +424,17 @@ SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::begin() {
 }
 
 template <class T>
-SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::begin() {
+SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::end() {
+    return Iterator(tail->next);
+}
+
+template<class T> 
+SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::const_begin() const {
+    return Iterator(head);
+}
+
+template<class T> 
+SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::const_end() const {
     return Iterator(tail->next);
 }
 
@@ -529,13 +547,80 @@ void VectorStore::addText(string rawText) {
 }
 
 SinglyLinkedList<float>& VectorStore::getVector(int index) {
+    if (index < 0 || index >= records.size()) throw out_of_range("Index is invalid!");
     VectorRecord* record = records.get(index);
     return *record->vector;
 }
 
 string VectorStore::getRawText(int index) const {
-    VectorRecord* record = records.get(index); // FIXME
+    if (index < 0 || index >= records.size()) throw out_of_range("Index is invalid!");
+    VectorRecord* record = records.get_copy(index); // FIXME
     return record->rawText;
+}
+
+int VectorStore::getId(int index) const {
+    if (index < 0 || index >= records.size()) throw out_of_range("Index is invalid!");   
+    VectorRecord* record = records.get_copy(index);
+    return record->id;
+}
+
+bool VectorStore::removeAt(int index) {
+    if (index < 0 || index >= records.size()) throw out_of_range("Index is invalid!");
+    VectorRecord* record = records.get(index);
+    delete record->vector;
+    delete record;
+    records.removeAt(index);    
+    return true;                                                                                                                                                                       
+}
+
+bool VectorStore::updateText(int index, string newRawText) {
+    if (index < 0 || index >= records.size()) throw out_of_range("Index is invalid!");
+    VectorRecord* record = records.get(index);
+    record->rawText = newRawText;
+    record->rawLength = newRawText.size();
+    SinglyLinkedList<float>* new_vector = preprocessing(newRawText);
+    delete record->vector;
+    record->vector = new_vector;
+    return true;
+}
+
+void VectorStore::setEmbeddingFunction(EmbedFn newEmbeddingFunction) {
+    this->embeddingFunction = newEmbeddingFunction;
+}
+
+void VectorStore::forEach(void (*action)(SinglyLinkedList<float>&, int, string&)) {
+    for (auto it = records.begin(); it != records.end(); it++) {
+        VectorRecord* record = *it;
+        action(*record->vector, record->id, record->rawText);
+    }
+}
+
+double VectorStore::vector_length(const SinglyLinkedList<float> &vector) const{
+    double result = 0;
+    for (auto it = vector.const_begin(); it != vector.const_end(); it++) {
+        result += *it * *it;
+    }
+    result = sqrt(result);
+    return result;
+}
+
+double VectorStore::cosineSimilarity(const SinglyLinkedList<float>& v1, const SinglyLinkedList<float>& v2) const {
+    double v1_length = vector_length(v1);
+    double v2_length = vector_length(v2);
+    double result = 0;
+    for (
+    auto it1 = v1.const_begin(), it2 = v2.const_begin();
+    it1 != v1.const_end() && it2 != v2.const_end();
+    it1++, it2++
+    ) {
+        result += *it1 * *it2;
+    }
+    result = result / (v1_length * v2_length);
+    return result;
+}
+
+double l1Distance(const SinglyLinkedList<float>& v1, const SinglyLinkedList<float>& v2) {
+        
 }
 
 // Explicit template instantiation for char, string, int, double, float, and Point
@@ -544,12 +629,12 @@ template class ArrayList<char>;
 template class ArrayList<string>;
 template class ArrayList<int>;
 template class ArrayList<double>;
-template class ArrayList<float>;
+template class ArrayList<float>;                                                                                        
 template class ArrayList<Point>;
 
 template class SinglyLinkedList<char>;
 template class SinglyLinkedList<string>;
-template class SinglyLinkedList<int>;
+template class SinglyLinkedList<int>;                                                       
 template class SinglyLinkedList<double>;
-template class SinglyLinkedList<float>;
+template class SinglyLinkedList<float>;                                                                                         
 template class SinglyLinkedList<Point>;
