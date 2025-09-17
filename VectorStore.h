@@ -36,6 +36,7 @@ public:
     void clear();
     T& get(int index);
     T get_copy(int index) const; // USER-DEFINED
+    T* get_raw_data(); // USER-DEFINED
     void set(int index, T e);
     int indexOf(T item) const;
     bool contains(T item) const;
@@ -43,6 +44,9 @@ public:
 
     Iterator begin();
     Iterator end();
+
+    Iterator const_begin() const; // USER-DEFINED
+    Iterator const_end() const; // USER-DEFINED
 
     // Inner class Iterator
     class Iterator {
@@ -149,6 +153,13 @@ public:
         VectorRecord(int id, const string& rawText, SinglyLinkedList<float>* vector);
     };
 
+    struct RankedItem {
+        int id;
+        double score;
+        RankedItem(int id, double score);
+        bool operator<(const RankedItem& other) const;
+    };
+
     using EmbedFn = SinglyLinkedList<float>* (*)(const string&);
 
 private:
@@ -186,8 +197,19 @@ public:
                       const SinglyLinkedList<float>& v2) const;
 
     int findNearest(const SinglyLinkedList<float>& query, const string& metric = "cosine") const;
-
     int* topKNearest(const SinglyLinkedList<float>& query, int k, const string& metric = "cosine") const;
+};
+
+template <class T>
+class Sorter {
+private:
+    T* array;
+    int size;
+    void quick_sort(int left, int right);
+public:
+    Sorter(T* array, int size);
+    ~Sorter() = default;
+    void sort();
 };
 
 #endif // VECTORSTORE_H

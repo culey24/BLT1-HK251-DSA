@@ -3,7 +3,7 @@
 // ----------------- ArrayList Implementation -----------------
 
 template <class T>
-ArrayList<T>::ArrayList(int initCapacity = 10) {
+ArrayList<T>::ArrayList(int initCapacity) {
     data = new T[initCapacity];
     capacity = initCapacity;
     count = 0;
@@ -28,8 +28,8 @@ template <class T>
 void ArrayList<T>::ensureCapacity(int cap) {
     if (cap <= capacity) return;
     int new_capacity = ceil(capacity * 1.5);
-    T* new_data = new T[capacity];
-    for (int i = 0; i < capacity; i++) {
+    T* new_data = new T[new_capacity];
+    for (int i = 0; i < count; i++) {
         new_data[i] = data[i];
     }
     delete[] data;
@@ -134,6 +134,11 @@ T ArrayList<T>::get_copy(int index) const {
 }
 
 template <class T>
+T* ArrayList<T>::get_raw_data() {
+    return data;
+}
+
+template <class T>
 void ArrayList<T>::set(int index, T e) {
     if (index < 0 || index >= count) {
         throw out_of_range("Index is invalid!");
@@ -157,15 +162,15 @@ bool ArrayList<T>::contains(T item) const {
 }
 
 template <class T>
-string ArrayList<T>::toString(string (*item2str)(T&) = 0) const {
+string ArrayList<T>::toString(string (*item2str)(T&)) const {
     if (!item2str) return "";
     stringstream ss;
-    ss << '['
+    ss << '[';
     for (int i = 0; i < count; i++) {
         ss << item2str(data[i]);
         if (i != count - 1) ss << ", ";
     }
-    ss << ']'
+    ss << ']';
     return ss.str();
 }
 
@@ -179,10 +184,19 @@ ArrayList<T>::Iterator ArrayList<T>::end() {
     return Iterator(this, this->count);
 }
 
+template <class T>
+ArrayList<T>::Iterator ArrayList<T>::const_begin() const {
+    return Iterator(this, 0);
+}
+
+template <class T>
+ArrayList<T>::Iterator ArrayList<T>::const_end() const {
+    return Iterator(this, this->count);
+}
 // ----------------- Iterator of ArrayList Implementation -----------------
 template <class T>
 ArrayList<T>::Iterator::Iterator(ArrayList<T>* pList, int index) {
-    if (index < 0 || index >= pList->count) {
+    if (index < 0 || index > pList->count) {
         throw out_of_range("Iterator is out of range!");
     }
     this->pList = pList;
@@ -214,14 +228,14 @@ bool ArrayList<T>::Iterator::operator!=(const ArrayList<T>::Iterator &other) con
 
 template <class T>
 ArrayList<T>::Iterator &ArrayList<T>::Iterator::operator++() {
-    if (cursor == count) throw out_of_range("Iterator cannot advance past end!");
+    if (cursor >= count) throw out_of_range("Iterator cannot advance past end!");
     this->cursor++;
     return *this;
 }
 
 template <class T>
 ArrayList<T>::Iterator ArrayList<T>::Iterator::operator++(int) {
-    if (cursor == count) throw out_of_range("Iterator cannot advance past end!");
+    if (cursor >= count) throw out_of_range("Iterator cannot advance past end!");
     Iterator previous_value = *this;
     ++*this;
     return previous_value;
@@ -619,8 +633,128 @@ double VectorStore::cosineSimilarity(const SinglyLinkedList<float>& v1, const Si
     return result;
 }
 
-double l1Distance(const SinglyLinkedList<float>& v1, const SinglyLinkedList<float>& v2) {
-        
+double VectorStore::l1Distance(const SinglyLinkedList<float>& v1, const SinglyLinkedList<float>& v2) const {
+    double result = 0;
+    for (
+        auto it1 = v1.const_begin(), it2 = v2.const_begin();
+        it1 != v1.const_end() && it2 != v2.const_end();
+        it1++, it2++
+    ) {
+        result += abs(*it1 - *it2);
+    }
+    return result;
+}
+
+double VectorStore::l2Distance(const SinglyLinkedList<float>& v1, const SinglyLinkedList<float>& v2) const {
+    double result = 0;
+    for (
+        auto it1 = v1.const_begin(), it2 = v2.const_begin();
+        it1 != v1.const_end() && it2 != v2.const_end();
+        it1++, it2++
+    ) {
+        result += pow(*it1 - *it2, 2);
+    }
+    result = sqrt(result);
+    return result;
+}    
+
+int VectorStore::findNearest(const SinglyLinkedList<float>& query, const string& metric) const {
+    if (!(metric == "cosine" || metric == "euclidean" || metric == "manhattan")) throw "metric_error()";
+    double min_cost = __INT_MAX__;
+    int result_id = -1;
+    for (auto it = records.const_begin(); it != records.const_end(); it++) {
+        VectorRecord* record = *it;
+        double cost = __INT_MAX__;
+        if (metric == "cosine") {
+            cost = cosineSimilarity(*record->vector, query);    
+        }
+        else if (metric == "euclidean") {
+            cost = l2Distance(*record->vector, query);
+        }
+        else {
+            cost = l1Distance(*record->vector, query);
+        }
+        if (cost < min_cost) {
+            min_cost = cost;
+            result_id = record->id;
+        }
+    }
+    return result_id;
+}
+
+int *VectorStore::topKNearest(const SinglyLinkedList<float> &query, int k, const std::string &metric = "cosine") const {
+    ArrayList<RankedItem> ranking_board;
+    for (auto it = records.const_begin(); it != records.const_end(); it++) {
+        VectorRecord* record = *it;
+        double cost = __INT_MAX__;
+        if (metric == "cosine") {
+            cost = cosineSimilarity(*record->vector, query);    
+        }
+        else if (metric == "euclidean") {
+            cost = l2Distance(*record->vector, query);
+        }
+        else {
+            cost = l1Distance(*record->vector, query);
+        }
+        RankedItem item = RankedItem(record->id, cost);
+        ranking_board.add(item);
+    }
+
+    Sorter<RankedItem>* item_sorter = new Sorter<RankedItem>(ranking_board.get_raw_data(), ranking_board.size());
+    item_sorter->sort();
+    delete item_sorter;
+    int* result = new int[k];
+    for (int i = 0; i < k; i++) {
+        RankedItem ranked_item = ranking_board.get(i);
+        result[i] = ranked_item.id;
+    }
+    return result;
+}
+
+// RANKEDITEM IMPLEMENT
+
+VectorStore::RankedItem::RankedItem(int id, double score) : id(id), score(score) {}
+
+bool VectorStore::RankedItem::operator<(const RankedItem& other) const {
+    return this->score < other.score;
+}
+
+// SORT CLASS IMPLEMENT
+template <class T>
+Sorter<T>::Sorter(T* array, int size) {
+    this->array = array;
+    this->size = size;
+}
+
+template <class T>
+void Sorter<T>::quick_sort(int left, int right) {
+    T pivot = array[(left + right)/2];
+    int i = left;
+    int j = right;
+    while (i < j) {
+        while (array[i] < pivot) {
+            i++;
+        }
+        while (pivot < array[j]) {
+            j--;
+        }
+        if (i <= j) {
+            swap(array[i], array[j]);
+            i++;
+            j--;
+        }   
+    }
+    if (i < right) {
+        quick_sort(i, right);
+    }
+    if (left < j) {
+        quick_sort(left, j);
+    }
+}
+
+template <class T>
+void Sorter<T>::sort() {
+    quick_sort(0, size - 1);
 }
 
 // Explicit template instantiation for char, string, int, double, float, and Point
