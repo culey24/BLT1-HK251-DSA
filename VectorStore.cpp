@@ -27,7 +27,7 @@ ArrayList<T>::~ArrayList() {
 template <class T>
 void ArrayList<T>::ensureCapacity(int cap) {
     if (cap <= capacity) return;
-    int new_capacity = ceil(capacity * 1.5);
+    int new_capacity = capacity * 1.5;
     T* new_data = new T[new_capacity];
     for (int i = 0; i < count; i++) {
         new_data[i] = data[i];
@@ -88,7 +88,7 @@ T ArrayList<T>::removeAt (int index) {
         new_data[i] = data[i];
     }
     T result = data[index];
-    for (int i = index; i < count; i++) {
+    for (int i = index + 1; i < count; i++) {
         new_data[i - 1] = data[i];
     }
     delete[] data;
@@ -217,7 +217,7 @@ T& ArrayList<T>::Iterator::operator*() {
         throw out_of_range("Iterator is out of range!");
     }
     return this->pList->data[cursor];
-}
+}   
 
 template <class T>
 bool ArrayList<T>::Iterator::operator!=(const ArrayList<T>::Iterator &other) const {
@@ -397,6 +397,7 @@ void SinglyLinkedList<T>::clear() {
 
 template <class T>
 T& SinglyLinkedList<T>::get(int index) {
+    if (index < 0 || index >= count) throw out_of_range("Index is invalid!");
     Node* cursor = head;
     for (int i = 0; i < index; i++) {
         cursor = cursor->next;
@@ -423,7 +424,7 @@ bool SinglyLinkedList<T>::contains(T item) const {
 }
 
 template <class T>
-string SinglyLinkedList<T>::toString(string (*item2str)(T&) = 0) const {
+string SinglyLinkedList<T>::toString(string (*item2str)(T&)) const {
     stringstream ss;
     for (Node* cursor = head; cursor != nullptr; cursor = cursor->next) {
         ss << '[' << item2str(cursor->data) << ']';
@@ -439,7 +440,7 @@ SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::begin() {
 
 template <class T>
 SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::end() {
-    return Iterator(tail->next);
+    return Iterator(nullptr);
 }
 
 template<class T> 
@@ -449,7 +450,7 @@ SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::const_begin() const {
 
 template<class T> 
 SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::const_end() const {
-    return Iterator(tail->next);
+    return Iterator(nullptr);
 }
 
 // ----------------- Iterator of SinglyLinkedList Implementation -----------------
@@ -467,7 +468,7 @@ SinglyLinkedList<T>::Iterator& SinglyLinkedList<T>::Iterator::operator=(const It
 
 template <class T>
 T& SinglyLinkedList<T>::Iterator::operator*() {
-    return *this->current;
+    return this->current->data;
 }
 
 template <class T>
@@ -477,14 +478,14 @@ bool SinglyLinkedList<T>::Iterator::operator!=(const Iterator& other) const {
 
 template <class T>
 SinglyLinkedList<T>::Iterator& SinglyLinkedList<T>::Iterator::operator++() {
-    if (this->current == nullptr) throw m out_of_range("Iterator cannot advance past end!");
+    if (this->current == nullptr) throw out_of_range("Iterator cannot advance past end!");
     this->current = this->current->next;
     return *this;
 }
 
 template <class T>
 SinglyLinkedList<T>::Iterator SinglyLinkedList<T>::Iterator::operator++(int) {
-    if (this->current == nullptr) throw m out_of_range("Iterator cannot advance past end!");
+    if (this->current == nullptr) throw out_of_range("Iterator cannot advance past end!");
     Iterator previous_value = *this;
     ++*this;
     return previous_value;
@@ -533,8 +534,10 @@ void VectorStore::clear() {
 }
 
 SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
-    SinglyLinkedList<float>* preprocessed_vector = nullptr;
-    if (embeddingFunction) preprocessed_vector = embeddingFunction(rawText);
+    if (!embeddingFunction) {
+        return nullptr;
+    }
+    SinglyLinkedList<float>* preprocessed_vector = embeddingFunction(rawText);
     int new_dimension = preprocessed_vector->size();
     if (new_dimension == dimension) return preprocessed_vector;
     if (new_dimension > dimension) {
@@ -548,7 +551,7 @@ SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
     }
     else if (new_dimension < dimension) {
         for (int i = 0; i < dimension - new_dimension; i++) {
-            preprocessed_vector->add(0.0f);
+            preprocessed_vector->add(0.0);
         }
         return preprocessed_vector;
     }
@@ -666,7 +669,8 @@ int VectorStore::findNearest(const SinglyLinkedList<float>& query, const string&
         VectorRecord* record = *it;
         double cost = __INT_MAX__;
         if (metric == "cosine") {
-            cost = cosineSimilarity(*record->vector, query);    
+            cost = cosineSimilarity(*record->vector, query); 
+            cost = 1 - cost;  
         }
         else if (metric == "euclidean") {
             cost = l2Distance(*record->vector, query);
@@ -682,13 +686,14 @@ int VectorStore::findNearest(const SinglyLinkedList<float>& query, const string&
     return result_id;
 }
 
-int *VectorStore::topKNearest(const SinglyLinkedList<float> &query, int k, const std::string &metric = "cosine") const {
+int *VectorStore::topKNearest(const SinglyLinkedList<float> &query, int k, const std::string &metric) const {
     ArrayList<RankedItem> ranking_board;
     for (auto it = records.const_begin(); it != records.const_end(); it++) {
         VectorRecord* record = *it;
         double cost = __INT_MAX__;
         if (metric == "cosine") {
             cost = cosineSimilarity(*record->vector, query);    
+            cost = 1 - cost;
         }
         else if (metric == "euclidean") {
             cost = l2Distance(*record->vector, query);
