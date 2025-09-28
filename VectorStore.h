@@ -156,6 +156,7 @@ public:
     struct RankedItem {
         int id;
         double score;
+        RankedItem();
         RankedItem(int id, double score);
         bool operator<(const RankedItem& other) const;
     };
@@ -171,7 +172,7 @@ private:
 public:
     VectorStore(int dimension = 512, EmbedFn embeddingFunction = nullptr);
     ~VectorStore();
-    int  size() const;
+    int size() const;
     bool empty() const;
     void clear();    
 

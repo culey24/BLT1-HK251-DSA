@@ -59,6 +59,8 @@ public:
         return Point(x * scalar, y * scalar, z * scalar);
     }
 
+    Point& operator=(const Point&) = default;
+
     bool operator==(const Point& other) const {
         const double EPSILON = 1e-9;
         return (fabs(x - other.x) < EPSILON) && 
