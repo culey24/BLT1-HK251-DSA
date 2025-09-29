@@ -206,7 +206,7 @@ class Sorter {
 private:
     T* array;
     int size;
-    void quick_sort(int left, int right);
+    void quick_sort(int left_index, int right_index);
 public:
     Sorter(T* array, int size);
     ~Sorter() = default;

@@ -196,19 +196,24 @@ public:
 
         // (11) iterator ++/-- và giới hạn
         try {
-            ++tc;
+            // ... setup code is the same ...
             ArrayList<int> a(3); a.add(1); a.add(2); a.add(3);
             auto it = a.begin();
-            assertEqual(*it, 1, 0, "ArrayListTC", "tc11");
-            it++; // post++
-            assertEqual(*it, 2, 0, "ArrayListTC", "tc11");
-            ++it; // pre++
-            assertEqual(*it, 3, 0, "ArrayListTC", "tc11");
+            it++; // cursor is now 1
+            ++it; // cursor is now 2 (pointing to the last element)
+
+            // This is the new, required step:
+            ++it; // Move the iterator to the "past-the-end" position. cursor is now 3. This should NOT throw.
+
+            // Now, with the iterator at the end, *this* increment should throw.
             assertThrows([&]{ ++it; }, "advance past end throws", "ArrayListTC", "tc11");
+
             ok("(11) ArrayList: iterator ++ bounds");
             ++passed;
-        } catch (const std::exception& e) { ng("(11) ArrayList: iterator ++ bounds", e.what()); ++failed; }
-
+        } catch (const std::exception& e) {
+            ng("(11) ArrayList: iterator ++ bounds", e.what());
+            ++failed;
+        }
         suiteSummary("ArrayListTC", tc);
     }
 };

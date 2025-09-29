@@ -228,14 +228,14 @@ bool ArrayList<T>::Iterator::operator!=(const ArrayList<T>::Iterator &other) con
 
 template <class T>
 typename ArrayList<T>::Iterator &ArrayList<T>::Iterator::operator++() {
-    if (cursor >= pList->count) throw out_of_range("Iterator cannot advance past end!");
+    if (cursor == pList->count) throw out_of_range("Iterator cannot advance past end!");
     this->cursor++;
     return *this;
 }
 
 template <class T>
 typename ArrayList<T>::Iterator ArrayList<T>::Iterator::operator++(int) {
-    if (cursor >= pList->count) throw out_of_range("Iterator cannot advance past end!");
+    if (cursor == pList->count) throw out_of_range("Iterator cannot advance past end!");
     Iterator previous_value = *this;
     ++*this;
     return previous_value;
@@ -728,7 +728,12 @@ VectorStore::RankedItem::RankedItem() {
 }
 
 bool VectorStore::RankedItem::operator<(const RankedItem& other) const {
-    return this->score < other.score;
+    if (this->score < other.score) return true;
+    else if (this->score == other.score) {
+        if (this->id < other.id) return true;
+        else return false;
+    }
+    else return false;
 }
 
 // SORT CLASS IMPLEMENT
@@ -739,15 +744,15 @@ Sorter<T>::Sorter(T* array, int size) {
 }
 
 template <class T>
-void Sorter<T>::quick_sort(int left, int right) {
-    T pivot = array[(left + right)/2];
-    int i = left;
-    int j = right;
+void Sorter<T>::quick_sort(int left_index, int right_index) {
+    T thresh = array[(left + right)/2];
+    int i = left_index;
+    int j = right_index;
     while (i < j) {
-        while (array[i] < pivot) {
+        while (array[i] < thresh) {
             i++;
         }
-        while (pivot < array[j]) {
+        while (thresh < array[j]) {
             j--;
         }
         if (i <= j) {
@@ -756,11 +761,11 @@ void Sorter<T>::quick_sort(int left, int right) {
             j--;
         }   
     }
-    if (i < right) {
-        quick_sort(i, right);
+    if (i < right_index) {
+        quick_sort(i, right_index);
     }
-    if (left < j) {
-        quick_sort(left, j);
+    if (left_index < j) {
+        quick_sort(left_index, j);
     }
 }
 
