@@ -169,6 +169,8 @@ private:
     int count;
     EmbedFn embeddingFunction;
 
+    int newest_id;
+
 public:
     VectorStore(int dimension = 512, EmbedFn embeddingFunction = nullptr);
     ~VectorStore();

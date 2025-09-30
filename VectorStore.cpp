@@ -507,6 +507,7 @@ VectorStore::VectorStore(int dimension, EmbedFn embeddingFunction) {
     this->dimension = dimension;
     this->count = 0;
     this->embeddingFunction = embeddingFunction;
+    this->newest_id = 0;
 }
 
 VectorStore::~VectorStore() {
@@ -559,7 +560,8 @@ SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
 
 void VectorStore::addText(string rawText) {
     SinglyLinkedList<float>* new_vector = preprocessing(rawText);
-    VectorRecord* new_record = new VectorRecord(records.size(), rawText, new_vector);
+    VectorRecord* new_record = new VectorRecord(newest_id + 1, rawText, new_vector);
+    newest_id = newest_id + 1;
     records.add(new_record);
     count++;
 }
@@ -610,7 +612,7 @@ void VectorStore::setEmbeddingFunction(EmbedFn newEmbeddingFunction) {
 void VectorStore::forEach(void (*action)(SinglyLinkedList<float>&, int, string&)) {
     for (auto it = records.begin(); it != records.end(); it++) {
         VectorRecord* record = *it;
-        action(*record->vector, record->id, record->rawText);
+        action(*record->vector, record->rawLength, record->rawText);
     }
 }
 
