@@ -4,6 +4,7 @@
 
 template <class T>
 ArrayList<T>::ArrayList(int initCapacity) {
+    if (initCapacity < 0) initCapacity = 10;
     data = new T[initCapacity];
     capacity = initCapacity;
     count = 0;
@@ -163,11 +164,15 @@ bool ArrayList<T>::contains(T item) const {
 
 template <class T>
 string ArrayList<T>::toString(string (*item2str)(T&)) const {
-    if (!item2str) return "";
     stringstream ss;
     ss << '[';
     for (int i = 0; i < count; i++) {
-        ss << item2str(data[i]);
+        if (item2str) {
+            ss << item2str(data[i]);
+        }
+        else {
+            ss << data[i];
+        }
         if (i != count - 1) ss << ", ";
     }
     ss << ']';
@@ -427,7 +432,8 @@ template <class T>
 string SinglyLinkedList<T>::toString(string (*item2str)(T&)) const {
     stringstream ss;
     for (Node* cursor = head; cursor != nullptr; cursor = cursor->next) {
-        ss << '[' << item2str(cursor->data) << ']';
+        if (item2str) ss << '[' << item2str(cursor->data) << ']';
+        else ss << '[' << cursor->data << ']';
         if (cursor != tail) ss<<"->";
     }
     return ss.str();
@@ -552,7 +558,7 @@ SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
     }
     else {
         for (int i = 0; i < dimension - new_dimension; i++) {
-            preprocessed_vector->add(0.0);
+            preprocessed_vector->add(0);
         }
         return preprocessed_vector;
     }
@@ -560,8 +566,7 @@ SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
 
 void VectorStore::addText(string rawText) {
     SinglyLinkedList<float>* new_vector = preprocessing(rawText);
-    VectorRecord* new_record = new VectorRecord(newest_id + 1, rawText, new_vector);
-    newest_id = newest_id + 1;
+    VectorRecord* new_record = new VectorRecord(++newest_id, rawText, new_vector);
     records.add(new_record);
     count++;
 }
@@ -666,7 +671,7 @@ double VectorStore::l2Distance(const SinglyLinkedList<float>& v1, const SinglyLi
 }    
 
 int VectorStore::findNearest(const SinglyLinkedList<float>& query, const string& metric) const {
-    if (!(metric == "cosine" || metric == "euclidean" || metric == "manhattan")) throw "metric_error()";
+    if (!(metric == "cosine" || metric == "euclidean" || metric == "manhattan")) throw invalid_metric();
     double min_cost = __INT_MAX__;
     int result_id = -1;
     for (auto it = records.const_begin(); it != records.const_end(); it++) {
@@ -691,6 +696,8 @@ int VectorStore::findNearest(const SinglyLinkedList<float>& query, const string&
 }
 
 int *VectorStore::topKNearest(const SinglyLinkedList<float> &query, int k, const std::string &metric) const {
+    if (!(metric == "cosine" || metric == "euclidean" || metric == "manhattan")) throw invalid_metric();
+    if (k <= 0) throw invalid_k_value();
     ArrayList<RankedItem> ranking_board;
     for (auto it = records.const_begin(); it != records.const_end(); it++) {
         VectorRecord* record = *it;
@@ -726,7 +733,7 @@ VectorStore::RankedItem::RankedItem(int id, double score) : id(id), score(score)
 
 VectorStore::RankedItem::RankedItem() {
     this->id = -1;
-    this->score = 0.0;
+    this->score = 0;
 }
 
 bool VectorStore::RankedItem::operator<(const RankedItem& other) const {
@@ -738,7 +745,7 @@ bool VectorStore::RankedItem::operator<(const RankedItem& other) const {
     else return false;
 }
 
-// SORT CLASS IMPLEMENT
+// SORTeR CLASS IMPLEMENT
 template <class T>
 Sorter<T>::Sorter(T* array, int size) {
     this->array = array;
@@ -747,7 +754,7 @@ Sorter<T>::Sorter(T* array, int size) {
 
 template <class T>
 void Sorter<T>::quick_sort(int left_index, int right_index) {
-    T thresh = array[(left + right)/2];
+    T thresh = array[(left_index + right_index)/2];
     int i = left_index;
     int j = right_index;
     while (i < j) {
@@ -791,3 +798,5 @@ template class SinglyLinkedList<int>;
 template class SinglyLinkedList<double>;
 template class SinglyLinkedList<float>;                                                                                         
 template class SinglyLinkedList<Point>;
+
+// TEMPLE OS
