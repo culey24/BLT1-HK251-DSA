@@ -541,7 +541,9 @@ void VectorStore::clear() {
 
 SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
     if (!embeddingFunction) {
-        return nullptr;
+        auto* zeros = new SinglyLinkedList<float>();
+        for (int i = 0; i < dimension; ++i) zeros->add(0.0f);
+        return zeros;
     }
     SinglyLinkedList<float>* preprocessed_vector = embeddingFunction(rawText);
     int new_dimension = preprocessed_vector->size();
@@ -557,7 +559,7 @@ SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
     }
     else {
         for (int i = 0; i < dimension - new_dimension; i++) {
-            preprocessed_vector->add(0);
+            preprocessed_vector->add(0.0f);
         }
         return preprocessed_vector;
     }
