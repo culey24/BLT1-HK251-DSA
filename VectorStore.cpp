@@ -4,8 +4,8 @@
 
 template <class T>
 ArrayList<T>::ArrayList(int initCapacity) {
-    if (initCapacity < 0) initCapacity = 10;
-    data = new T[initCapacity];
+    if (initCapacity <= 0) data = nullptr;
+    else data = new T[initCapacity];
     capacity = initCapacity;
     count = 0;
 }
