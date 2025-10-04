@@ -633,6 +633,9 @@ double VectorStore::cosineSimilarity(const SinglyLinkedList<float>& v1, const Si
     double v1_length = vector_length(v1);
     double v2_length = vector_length(v2);
     double result = 0;
+
+    if (v1_length == 0 || v2_length == 0) return 0;
+
     for (
     auto it1 = v1.const_begin(), it2 = v2.const_begin();
     it1 != v1.const_end() && it2 != v2.const_end();
