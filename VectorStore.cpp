@@ -727,6 +727,7 @@ int *VectorStore::topKNearest(const SinglyLinkedList<float> &query, int k, const
 }
 
 int VectorStore::get_biggest_id() const {
+    if (records.empty()) return 0;
 	VectorRecord* record = records.get_copy(count - 1);
 	return record->id;
 }
