@@ -169,8 +169,6 @@ private:
     int count;
     EmbedFn embeddingFunction;
 
-    int newest_id;
-
 public:
     VectorStore(int dimension = 512, EmbedFn embeddingFunction = nullptr);
     ~VectorStore();
@@ -201,6 +199,8 @@ public:
 
     int findNearest(const SinglyLinkedList<float>& query, const string& metric = "cosine") const;
     int* topKNearest(const SinglyLinkedList<float>& query, int k, const string& metric = "cosine") const;
+
+	int get_biggest_id() const; // USER-DEFINED
 };
 
 template <class T>

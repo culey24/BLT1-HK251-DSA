@@ -513,7 +513,6 @@ VectorStore::VectorStore(int dimension, EmbedFn embeddingFunction) {
     this->dimension = dimension;
     this->count = 0;
     this->embeddingFunction = embeddingFunction;
-    this->newest_id = 0;
 }
 
 VectorStore::~VectorStore() {
@@ -566,7 +565,7 @@ SinglyLinkedList<float>* VectorStore::preprocessing(string rawText) {
 
 void VectorStore::addText(string rawText) {
     SinglyLinkedList<float>* new_vector = preprocessing(rawText);
-    VectorRecord* new_record = new VectorRecord(++newest_id, rawText, new_vector);
+    VectorRecord* new_record = new VectorRecord(get_biggest_id() + 1, rawText, new_vector);
     records.add(new_record);
     count++;
 }
@@ -727,6 +726,10 @@ int *VectorStore::topKNearest(const SinglyLinkedList<float> &query, int k, const
     return result;
 }
 
+int VectorStore::get_biggest_id() const {
+	VectorRecord* record = records.get_copy(count - 1);
+	return record->id;
+}
 // RANKEDITEM IMPLEMENT
 
 VectorStore::RankedItem::RankedItem(int id, double score) : id(id), score(score) {}
