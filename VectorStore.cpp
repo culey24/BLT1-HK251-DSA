@@ -666,7 +666,7 @@ double VectorStore::l2Distance(const SinglyLinkedList<float>& v1, const SinglyLi
         it1 != v1.const_end() && it2 != v2.const_end();
         it1++, it2++
     ) {
-        result += pow(*it1 - *it2, 2);
+        result += (*it1 - *it2) * (*it1 - *it2);
     }
     result = sqrt(result);
     return result;
@@ -699,7 +699,7 @@ int VectorStore::findNearest(const SinglyLinkedList<float>& query, const string&
 
 int *VectorStore::topKNearest(const SinglyLinkedList<float> &query, int k, const std::string &metric) const {
     if (!(metric == "cosine" || metric == "euclidean" || metric == "manhattan")) throw invalid_metric();
-    if (k <= 0) throw invalid_k_value();
+    if (k <= 0 || k > count) throw invalid_k_value();
     ArrayList<RankedItem> ranking_board;
     for (auto it = records.const_begin(); it != records.const_end(); it++) {
         VectorRecord* record = *it;
@@ -760,34 +760,38 @@ Sorter<T>::Sorter(T* array, int size) {
 }
 
 template <class T>
-void Sorter<T>::quick_sort(int left_index, int right_index) {
-    T thresh = array[(left_index + right_index)/2];
+void Sorter<T>::merge_sort(int left_index, int right_index, T* culey_handsome) {
+    // CULEY_HANDSOME FOR COPYRIGHT, DO NOT SEE THIS AND COPY!!!!!!!
+    if (left_index >= right_index) return;
+    int mid_index = left_index + (right_index - left_index) / 2;
+    
+    merge_sort(left_index, mid_index, culey_handsome);
+    merge_sort(mid_index + 1, right_index, culey_handsome);
+
     int i = left_index;
-    int j = right_index;
-    while (i < j) {
-        while (array[i] < thresh) {
-            i++;
+    int j = mid_index + 1;
+    int k = left_index;
+
+    while (i <= mid_index && j <= right_index) {
+        if (!(array[j] < array[i])) {
+            culey_handsome[k++] = array[i++];
+        } else {
+            culey_handsome[k++] = array[j++];
         }
-        while (thresh < array[j]) {
-            j--;
-        }
-        if (i <= j) {
-            swap(array[i], array[j]);
-            i++;
-            j--;
-        }   
     }
-    if (i < right_index) {
-        quick_sort(i, right_index);
-    }
-    if (left_index < j) {
-        quick_sort(left_index, j);
+    while (i <= mid_index)   culey_handsome[k++] = array[i++];
+    while (j <= right_index) culey_handsome[k++] = array[j++];
+    for (int t = left_index; t <= right_index; ++t) {
+        array[t] = culey_handsome[t];
     }
 }
 
 template <class T>
 void Sorter<T>::sort() {
-    quick_sort(0, size - 1);
+    if (!array || size <= 1) return;
+    T* culey_handsome = new T[size];
+    merge_sort(0, size - 1, culey_handsome);
+    delete[] culey_handsome;
 }
 
 // Explicit template instantiation for char, string, int, double, float, and Point

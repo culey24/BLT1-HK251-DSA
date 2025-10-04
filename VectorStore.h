@@ -208,7 +208,7 @@ class Sorter {
 private:
     T* array;
     int size;
-    void quick_sort(int left_index, int right_index);
+    void merge_sort(int left_index, int right_index, T* culey_handsome);
 public:
     Sorter(T* array, int size);
     ~Sorter() = default;
